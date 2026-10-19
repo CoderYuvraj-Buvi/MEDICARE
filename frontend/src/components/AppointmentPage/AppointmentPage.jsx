@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -151,6 +152,7 @@ const StatusBadge = ({ itemStatus }) => {
 
 /* -------------------- Component -------------------- */
 export default function AppointmentPage() {
+  const navigate = useNavigate();
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
 
@@ -403,6 +405,7 @@ export default function AppointmentPage() {
         }
 
         const payment = (a.payment && a.payment.method) || "Cash";
+        const paymentStatus = (a.payment && a.payment.status) || "Pending";
         const status =
           a.status ||
           (a.payment && a.payment.status === "Paid" ? "Confirmed" : "Pending");
@@ -423,6 +426,7 @@ export default function AppointmentPage() {
           date,
           time,
           payment,
+          paymentStatus,
           status,
           rescheduledTo,
         };
@@ -457,6 +461,7 @@ export default function AppointmentPage() {
         }
 
         const payment = (s.payment && s.payment.method) || "Cash";
+        const paymentStatus = (s.payment && s.payment.status) || "Pending";
         const status =
           s.status ||
           (s.payment && s.payment.status === "Paid" ? "Confirmed" : "Pending");
@@ -472,6 +477,7 @@ export default function AppointmentPage() {
           date,
           time,
           payment,
+          paymentStatus,
           status,
           rescheduledTo,
         };
@@ -533,6 +539,20 @@ export default function AppointmentPage() {
                 <StatusBadge itemStatus={item.status} />
               </div>
 
+              {item.payment === "Online" &&
+                item.paymentStatus !== "Paid" &&
+                item.status !== "Completed" &&
+                item.status !== "Canceled" && (
+                  <button
+                    onClick={() =>
+                      navigate(`/payment?appointmentId=${item.id}&type=doctor`)
+                    }
+                    className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all hover:shadow-md cursor-pointer"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" /> Complete Payment
+                  </button>
+                )}
+
               {item.status === "Rescheduled" && item.rescheduledTo ? (
                 <div className={cardStyles.rescheduledText}>
                   Rescheduled to{" "}
@@ -590,6 +610,20 @@ export default function AppointmentPage() {
                 <PaymentBadge payment={srv.payment} />
                 <StatusBadge itemStatus={srv.status} />
               </div>
+
+              {srv.payment === "Online" &&
+                srv.paymentStatus !== "Paid" &&
+                srv.status !== "Completed" &&
+                srv.status !== "Canceled" && (
+                  <button
+                    onClick={() =>
+                      navigate(`/payment?appointmentId=${srv.id}&type=service`)
+                    }
+                    className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all hover:shadow-md cursor-pointer"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" /> Complete Payment
+                  </button>
+                )}
 
               {srv.status === "Rescheduled" && srv.rescheduledTo ? (
                 <div className={cardStyles.serviceRescheduledText}>

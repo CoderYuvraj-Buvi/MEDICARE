@@ -25,8 +25,9 @@ const appointmentRouter = express.Router();
 // list appointments
 appointmentRouter.get("/", getAppointments);
 
-// stripe confirm
+// payment confirm (supports query param or body)
 appointmentRouter.get("/confirm", confirmPayment);
+appointmentRouter.post("/confirm", confirmPayment);
 
 // stats
 appointmentRouter.get("/stats/summary", getStats);
@@ -50,14 +51,18 @@ appointmentRouter.get(
   requireAuth(),
   getAppointmentsByPatient
 );
-// appointmentRouter.get("/:id", getAppointmentById);
+
 appointmentRouter.get(
   "/doctor/:doctorId",
   getAppointmentsByDoctor
 );
 
+appointmentRouter.get("/paitents/count", getRegisteredUserCount); 
+
+// Appointment ID routes
+appointmentRouter.get("/:id", getAppointmentById);
+appointmentRouter.post("/:id/pay", confirmPayment);
 appointmentRouter.post("/:id/cancel", cancelAppointment);
-appointmentRouter.get("/paitents/count",getRegisteredUserCount); 
 appointmentRouter.put("/:id", updateAppointment);
 
 

@@ -310,9 +310,8 @@ export default function DoctorDetail() {
         return;
       }
 
-      // If checkoutUrl is returned -> redirect to Stripe Checkout
+      // If checkoutUrl is returned -> redirect to Payment Page
       if (body.checkoutUrl) {
-        // redirect user to Stripe Checkout
         window.location.href = body.checkoutUrl;
         return;
       }
@@ -792,7 +791,11 @@ export default function DoctorDetail() {
                     <div className={doctorDetailStyles.bookingButtonContent}>
                       <Phone className={doctorDetailStyles.bookingIcon} />
                       <span>
-                        {isSubmitting ? "Booking..." : "Confirm Booking"}
+                        {isSubmitting
+                          ? "Booking..."
+                          : paymentMethod === "Online"
+                          ? "Proceed to Payment"
+                          : "Confirm Booking"}
                       </span>
                     </div>
                   </button>

@@ -383,7 +383,7 @@ export default function ServiceDetail() {
         "Booking created successfully. Redirecting to appointments...",
       );
       setTimeout(() => {
-        navigate("/appointments?payment_status=Paid", { replace: true });
+        navigate("/appointments?payment_status=Pending", { replace: true });
       }, 700);
 
       setCustomerName("");
@@ -630,6 +630,10 @@ export default function ServiceDetail() {
               <Send />
               {submitting
                 ? "Submitting..."
+                : paymentMethod === "Online"
+                ? `Proceed to Payment ${
+                    service.price ? `• ₹${service.price}` : ""
+                  }`
                 : `Confirm Booking ${
                     service.price ? `• ₹${service.price}` : ""
                   }`}
