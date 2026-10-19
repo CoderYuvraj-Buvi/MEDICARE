@@ -1,11 +1,8 @@
 // controllers/serviceAppointmentController.js
+import mongoose from "mongoose";
 import ServiceAppointment from "../models/serviceAppointment.js";
 import Service from "../models/Service.js";
-import Stripe from "stripe";
 import { getAuth } from "@clerk/express";
-
-const stripeKey = process.env.STRIPE_SECRET_KEY || null;
-const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2022-11-15" }) : null;
 
 const safeNumber = (val) => {
   if (val === undefined || val === null || val === "") return null;
@@ -166,112 +163,76 @@ export const createServiceAppointment = async (req, res) => {
       return res.status(201).json({ success: true, appointment: created, checkoutUrl: null });
     }
 
-    // Online booking (Stripe)
-    if (!stripe) return res.status(500).json({ success: false, message: "Stripe not configured on server" });
-    const frontendBase = buildFrontendBase(req);
-    if (!frontendBase) return res.status(500).json({ success: false, message: "Frontend base URL not available. Set FRONTEND_URL or provide Origin header." });
+    // Online booking (direct in-app payment)
+    const frontendBase = buildFrontendBase(req) || "http://localhost:5173";
 
-    const successUrl = `${frontendBase}/service-appointment/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${frontendBase}/service-appointment/cancel`;
+    const created = await ServiceAppointment.create({
+      ...base,
+      status: "Pending",
+      payment: {
+        method: "Online",
+        status: "Pending",
+        amount: numericAmount,
+        providerId: `pay_${Date.now()}`,
+      },
+    });
 
-    let session;
-    try {
-      session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        customer_email: email ? String(email) : undefined,
-        line_items: [
-          {
-            price_data: {
-              currency: "inr",
-              product_data: {
-                name: `Service: ${String(resolvedServiceName).slice(0, 60)}`,
-                description: `Appointment on ${base.date} ${base.hour}:${String(base.minute).padStart(2, "0")} ${base.ampm}`,
-              },
-              unit_amount: Math.round(numericAmount * 100),
-            },
-            quantity: 1,
-          },
-        ],
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        metadata: {
-          serviceId: String(serviceId),
-          serviceName: String(resolvedServiceName).slice(0, 200),
-          patientName: base.patientName,
-          mobile: base.mobile,
-          clerkUserId: base.createdBy || "",
-          serviceImageUrl: finalServiceImageUrl ? String(finalServiceImageUrl).slice(0, 200) : "",
-        },
-      });
-    } catch (stripeErr) {
-      console.error("Stripe create session error:", stripeErr);
-      const message = stripeErr?.raw?.message || stripeErr?.message || "Stripe error";
-      return res.status(502).json({ success: false, message: `Payment provider error: ${message}` });
-    }
+    const checkoutUrl = `${frontendBase}/payment?appointmentId=${created._id}&type=service`;
 
-    try {
-      const created = await ServiceAppointment.create({
-        ...base,
-        status: "Confirmed",
-        payment: { method: "Online", status: "Pending", amount: numericAmount, sessionId: session.id || "" },
-      });
-      return res.status(201).json({ success: true, appointment: created, checkoutUrl: session.url || null });
-    } catch (dbErr) {
-      console.error("DB error saving service appointment after stripe session:", dbErr);
-      return res.status(500).json({ success: false, message: "Failed to create appointment record" });
-    }
+    return res.status(201).json({
+      success: true,
+      appointment: created,
+      checkoutUrl,
+    });
   } catch (err) {
     console.error("createServiceAppointment unexpected:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-/* CONFIRM (called after Stripe redirect/webhook) */
+/* CONFIRM (called to complete service appointment payment) */
 export const confirmServicePayment = async (req, res) => {
   try {
-    const { session_id } = req.query;
-    if (!session_id) return res.status(400).json({ success: false, message: "session_id is required" });
-    if (!stripe) return res.status(500).json({ success: false, message: "Stripe not configured" });
+    const appointmentId =
+      req.params?.id ||
+      req.body?.appointmentId ||
+      req.body?.id ||
+      req.query?.appointmentId ||
+      req.query?.id ||
+      req.query?.session_id;
 
-    let session;
-    try { session = await stripe.checkout.sessions.retrieve(session_id); } catch (err) {
-      console.error("Stripe retrieve session error:", err);
-      return res.status(404).json({ success: false, message: "Stripe session not found" });
-    }
-    if (!session) return res.status(404).json({ success: false, message: "Invalid session" });
-    if (session.payment_status !== "paid") return res.status(400).json({ success: false, message: "Payment not completed" });
-
-    let appt = await ServiceAppointment.findOneAndUpdate(
-      { "payment.sessionId": session_id },
-      {
-        $set: {
-          "payment.status": "Confirmed",
-          "payment.providerId": session.payment_intent || "",
-          "payment.paidAt": new Date(),
-          status: "Confirmed",
-        },
-      },
-      { new: true }
-    );
-
-    if (!appt && session.metadata?.appointmentId) {
-      appt = await ServiceAppointment.findOneAndUpdate(
-        { _id: session.metadata.appointmentId },
-        {
-          $set: {
-            "payment.status": "Confirmed",
-            "payment.providerId": session.payment_intent || "",
-            "payment.paidAt": new Date(),
-            status: "Confirmed",
-          },
-        },
-        { new: true }
-      );
+    if (!appointmentId) {
+      return res.status(400).json({ success: false, message: "appointmentId is required" });
     }
 
-    if (!appt) return res.status(404).json({ success: false, message: "Service appointment not found" });
-    return res.json({ success: true, appointment: appt });
+    let appt = null;
+    if (mongoose.Types.ObjectId.isValid(appointmentId)) {
+      appt = await ServiceAppointment.findById(appointmentId);
+    }
+    if (!appt) {
+      appt = await ServiceAppointment.findOne({ "payment.sessionId": appointmentId });
+    }
+
+    if (!appt) {
+      return res.status(404).json({ success: false, message: "Service appointment not found" });
+    }
+
+    appt.payment = {
+      ...(appt.payment?.toObject ? appt.payment.toObject() : appt.payment),
+      method: "Online",
+      status: "Paid",
+      providerId: appt.payment?.providerId || `pay_${Date.now()}`,
+      paidAt: new Date(),
+    };
+    appt.status = "Confirmed";
+
+    await appt.save();
+
+    return res.json({
+      success: true,
+      message: "Payment confirmed successfully",
+      appointment: appt,
+    });
   } catch (err) {
     console.error("confirmServicePayment:", err);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -315,9 +276,12 @@ export const getServiceAppointments = async (req, res) => {
 export const getServiceAppointmentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const appt = await ServiceAppointment.findById(id).lean();
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service appointment ID" });
+    }
+    const appt = await ServiceAppointment.findById(id).populate("serviceId", "name image imageUrl imageSmall price fees").lean();
     if (!appt) return res.status(404).json({ success: false, message: "Not found" });
-    return res.json({ success: true, data: appt });
+    return res.json({ success: true, data: appt, appointment: appt });
   } catch (err) {
     console.error("getServiceAppointmentById:", err);
     return res.status(500).json({ success: false, message: "Server error" });

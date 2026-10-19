@@ -19,6 +19,7 @@ import EditProfile from "./pages/EditProfile/EditProfile";
 
 // Lucide icon
 import { CircleChevronUp } from "lucide-react";
+import PaymentPage from "./pages/Payment/PaymentPage";
 import VerifyPaymentPage from "../VerifyPaymetPage";
 import VerifyServicePaymentPage from "../VerifyServicePaymentPage";
 
@@ -90,7 +91,8 @@ const App = () => {
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/doctor-admin/login" element={<Login />} />
 
-          {/* ✅ STRIPE PAYMENT ROUTES */}
+          {/* Payment Routes */}
+          <Route path="/payment" element={<PaymentPage />} />
           <Route path="/appointment/success" element={<VerifyPaymentPage />} />
           <Route path="/appointment/cancel" element={<VerifyPaymentPage />} />
 

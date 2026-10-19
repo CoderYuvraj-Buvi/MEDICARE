@@ -13,9 +13,9 @@ const VerifyServicePaymentPage = () => {
 
     const verifyServicePayment = async () => {
       const params = new URLSearchParams(location.search || "");
-      const sessionId = params.get("session_id");
+      const sessionId = params.get("session_id") || params.get("appointmentId") || params.get("id");
 
-      if (location.pathname === "/service-appointment/cancel") {
+      if (location.pathname === "/service-appointment/cancel" || params.get("status") === "cancel") {
         if (!cancelled) {
           navigate("/appointments?service_payment=Cancelled", {
             replace: true,
@@ -37,7 +37,7 @@ const VerifyServicePaymentPage = () => {
         const res = await axios.get(
           `${API_BASE}/api/service-appointments/confirm`,
           {
-            params: { session_id: sessionId },
+            params: { session_id: sessionId, appointmentId: sessionId },
             timeout: 15000,
           }
         );

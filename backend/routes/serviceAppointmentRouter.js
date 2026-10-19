@@ -18,6 +18,7 @@ const router = express.Router();
 /* FIXED ROUTES FIRST */
 router.get("/", getServiceAppointments);
 router.get("/confirm", confirmServicePayment);
+router.post("/confirm", confirmServicePayment);
 router.get("/stats/summary", getServiceAppointmentStats);
 
 router.post("/", clerkMiddleware(), requireAuth(), createServiceAppointment);
@@ -32,6 +33,7 @@ router.get(
 
 /* ID ROUTES LAST */
 router.get("/:id", getServiceAppointmentById);
+router.post("/:id/pay", confirmServicePayment);
 router.put("/:id", updateServiceAppointment);
 router.post("/:id/cancel", cancelServiceAppointment);
 

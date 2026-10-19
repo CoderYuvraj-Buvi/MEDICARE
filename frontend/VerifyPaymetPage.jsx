@@ -13,10 +13,10 @@ const VerifyPaymentPage = () => {
 
     const verifyPayment = async () => {
       const params = new URLSearchParams(location.search || "");
-      const sessionId = params.get("session_id");
+      const sessionId = params.get("session_id") || params.get("appointmentId") || params.get("id");
 
-      // user cancelled on Stripe
-      if (location.pathname === "/appointment/cancel") {
+      // Payment cancelled
+      if (location.pathname === "/appointment/cancel" || params.get("status") === "cancel") {
         if (!cancelled)
           navigate("/appointments?payment_status=Cancelled", { replace: true });
         return;
@@ -29,9 +29,8 @@ const VerifyPaymentPage = () => {
       }
 
       try {
-        // Do NOT set withCredentials unless your server expects cookies. We use plain GET to confirm.
         const res = await axios.get(`${API_BASE}/api/appointments/confirm`, {
-          params: { session_id: sessionId },
+          params: { session_id: sessionId, appointmentId: sessionId },
           timeout: 15000,
         });
 
