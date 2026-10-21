@@ -33,7 +33,7 @@ export default function AnimatedNavbar() {
   // Clerk
   const clerk = useClerk?.();
   const { getToken, isLoaded: authLoaded } = useAuth();
-  const { isSignedIn, user, isLoaded: userLoaded } = useUser();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
 
   /* ---------------- Sliding Active Indicator ---------------- */
   const moveIndicator = useCallback(() => {

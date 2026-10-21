@@ -1,6 +1,6 @@
-// controllers/doctorController.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import Doctor from "../models/Doctor.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
@@ -213,6 +213,9 @@ export const getDoctors = async (req, res) => {
 export async function getDoctorById(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid doctor ID" });
+    }
     const doc = await Doctor.findById(id).select("-password").lean();
     if (!doc) return res.status(404).json({ success: false, message: "Doctor not found" });
     return res.json({ success: true, data: normalizeDocForClient(doc) });
@@ -225,6 +228,9 @@ export async function getDoctorById(req, res) {
 export async function updateDoctor(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid doctor ID" });
+    }
     const body = req.body || {};
 
     if (!req.doctor || String(req.doctor._id || req.doctor.id) !== String(id)) {
@@ -275,6 +281,9 @@ export async function updateDoctor(req, res) {
 export async function deleteDoctor(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid doctor ID" });
+    }
     const existing = await Doctor.findById(id);
     if (!existing) return res.status(404).json({ success: false, message: "Doctor not found" });
 
@@ -297,6 +306,9 @@ export async function deleteDoctor(req, res) {
 export async function toggleAvailability(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid doctor ID" });
+    }
     if (!req.doctor || String(req.doctor._id || req.doctor.id) !== String(id)) {
       return res.status(403).json({ success: false, message: "Not authorized to change availability for this doctor" });
     }

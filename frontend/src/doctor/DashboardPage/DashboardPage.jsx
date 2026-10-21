@@ -408,6 +408,12 @@ export default function DashboardPage({ apiBase }) {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Stat cards */}
         <div className={dashboardStyles.statsGrid}>
           <StatCard

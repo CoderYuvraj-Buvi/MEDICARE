@@ -146,7 +146,6 @@ export default function DoctorDetail() {
         email: prev.email || email,
       }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLoaded, user]);
 
   useEffect(() => {

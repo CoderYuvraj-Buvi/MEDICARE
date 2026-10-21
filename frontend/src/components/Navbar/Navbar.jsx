@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { Menu, X, User as UserIcon, Key } from "lucide-react";
 
@@ -26,7 +26,6 @@ export default function Navbar() {
   const location = useLocation();
   const navRef = useRef(null);
   const clerk = useClerk();
-  const navigate = useNavigate();
 
   /* Hide / show navbar on scroll */
   useEffect(() => {
@@ -72,12 +71,6 @@ export default function Navbar() {
     { label: "Appointments", href: "/appointments" },
     { label: "Contact", href: "/contact" },
   ];
-
-  function doctorLogout() {
-    localStorage.removeItem(STORAGE_KEY);
-    setIsDoctorLoggedIn(false);
-    navigate("/");
-  }
 
   return (
     <>
@@ -140,12 +133,12 @@ export default function Navbar() {
               <SignedOut>
                 {/* Doctor Admin */}
                 <Link
-                  to="/doctor-admin/login"
+                  to={isDoctorLoggedIn ? "/doctor-admin" : "/doctor-admin/login"}
                   className={navbarStyles.doctorAdminButton}
                 >
                   <UserIcon className={navbarStyles.doctorAdminIcon} />
                   <span className={navbarStyles.doctorAdminText}>
-                    Doctor Admin
+                    {isDoctorLoggedIn ? "Doctor Portal" : "Doctor Admin"}
                   </span>
                 </Link>
 
@@ -203,11 +196,11 @@ export default function Navbar() {
               {/* Patient logged out */}
               <SignedOut>
                 <Link
-                  to="/doctor-admin/login"
+                  to={isDoctorLoggedIn ? "/doctor-admin" : "/doctor-admin/login"}
                   onClick={() => setIsOpen(false)}
                   className={navbarStyles.mobileDoctorAdminButton}
                 >
-                  Doctor Admin
+                  {isDoctorLoggedIn ? "Doctor Portal" : "Doctor Admin"}
                 </Link>
                 <div className={navbarStyles.mobileLoginContainer}>
                   <button

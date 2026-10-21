@@ -53,12 +53,6 @@ function parseTimeToParts(timeStr) {
   return { hour: 12, minute: 0, ampm: "AM" };
 }
 
-function timePartsTo12HourString(hh24, mm) {
-  let ampm = hh24 >= 12 ? "PM" : "AM";
-  let hour = hh24 % 12 === 0 ? 12 : hh24 % 12;
-  return `${formatTwo(hour)}:${formatTwo(mm)} ${ampm}`;
-}
-
 function timePartsToInputValue(a) {
   const hour = Number(a.hour || 0);
   const minute = Number(a.minute || 0);
@@ -180,21 +174,14 @@ function RescheduleButton({ appointment, onReschedule, disabled }) {
   const [date, setDate] = useState(appointment.date || todayISO);
   const [time, setTime] = useState(timePartsToInputValue(appointment));
 
-  useEffect(() => {
+  function openEditing() {
     const baseDate = appointment.date || "";
-    // if appointment date is in the past, default to today for selection
     const initialDate =
       baseDate && !isDateBefore(baseDate, todayISO) ? baseDate : todayISO;
     setDate(initialDate);
     setTime(timePartsToInputValue(appointment));
-  }, [
-    appointment.date,
-    appointment.hour,
-    appointment.minute,
-    appointment.ampm,
-    // include todayISO so component updates correctly around midnight if needed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ]);
+    setEditing(true);
+  }
 
   function save() {
     if (!date || !time) return;
@@ -224,7 +211,7 @@ function RescheduleButton({ appointment, onReschedule, disabled }) {
       {!editing ? (
         <div className="flex justify-end">
           <button
-            onClick={() => setEditing(true)}
+            onClick={openEditing}
             disabled={terminal || disabled}
             title={
               terminal ? "Cannot reschedule completed/canceled" : "Reschedule"
@@ -291,7 +278,6 @@ export default function ServiceAppointmentsPage() {
 
   useEffect(() => {
     fetchAppointments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function pushToast(title, message) {

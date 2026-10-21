@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Edit2,
   Save,
@@ -20,7 +20,7 @@ import {
   AlertCircle,
   BadgeIndianRupee,
 } from "lucide-react";
-import { editProfilePageStyles, iconSize } from "../../assets/dummyStyles";
+import { editProfilePageStyles } from "../../assets/dummyStyles";
 
 const STORAGE_KEY = "doctorToken_v1";
 
@@ -58,7 +58,6 @@ function dedupeAndSortSchedule(schedule = {}) {
 /* ----------------- main component ----------------- */
 export default function EditProfilePage({ apiBase }) {
   const { id } = useParams(); // expects route like /doctor-edit/:id
-  const navigate = useNavigate();
   const API_BASE = `${apiBase || import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/doctors`;
 
   const [doc, setDoc] = useState(null);

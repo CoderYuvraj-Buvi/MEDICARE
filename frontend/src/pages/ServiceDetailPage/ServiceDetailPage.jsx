@@ -15,11 +15,91 @@ import { serviceDetailStyles, iconSize } from "../../assets/dummyStyles";
 
 const DEFAULT_HOST = (import.meta.env.VITE_API_URL || "http://localhost:4000").replace(/\/$/, "");
 
+function normalizeToDateString(d) {
+  const dt = new Date(d);
+  if (isNaN(dt)) return null;
+  return dt.toISOString().split("T")[0];
+}
+
+function sortServiceDates(datesArr) {
+  if (!Array.isArray(datesArr)) return [];
+
+  const uniq = Array.from(
+    new Set(datesArr.map(normalizeToDateString).filter(Boolean)),
+  );
+
+  const parsed = uniq.map((ds) => ({ ds, date: new Date(ds) }));
+  const dateVal = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const today = new Date();
+  const todayVal = dateVal(today);
+
+  const past = parsed
+    .filter((p) => dateVal(p.date) < todayVal)
+    .sort((a, b) => dateVal(b.date) - dateVal(a.date));
+
+  const future = parsed
+    .filter((p) => dateVal(p.date) >= todayVal)
+    .sort((a, b) => dateVal(a.date) - dateVal(b.date));
+
+  return [...past, ...future].map((p) => p.ds);
+}
+
+function transformServiceShape(doc) {
+  const out = {};
+  out.id =
+    doc._id ??
+    doc.id ??
+    doc.slug ??
+    String(doc.name).replace(/\s+/g, "-").toLowerCase();
+  out.name = doc.name ?? doc.title ?? "Service";
+  out.image =
+    doc.image || doc.imageUrl || doc.imageURL || doc.image_path || null;
+  out.price =
+    typeof doc.price === "number" ? doc.price : Number(doc.price) || 0;
+  out.about = doc.about ?? doc.description ?? doc.shortDescription ?? "";
+  out.instructions = Array.isArray(doc.instructions) ? doc.instructions : [];
+
+  let dates = Array.isArray(doc.dates) ? doc.dates.slice() : [];
+  let slotsMap = {};
+  if (
+    doc.slots &&
+    !Array.isArray(doc.slots) &&
+    typeof doc.slots === "object"
+  ) {
+    slotsMap = { ...doc.slots };
+    if (dates.length === 0) dates = Object.keys(slotsMap);
+  } else if (Array.isArray(doc.slots)) {
+    const arr = doc.slots.slice();
+    if (dates.length > 0) {
+      dates.forEach((d) => (slotsMap[d] = arr.slice()));
+    } else {
+      const today = new Date().toISOString().split("T")[0];
+      slotsMap[today] = arr.slice();
+      dates = [today];
+    }
+  } else {
+    if (dates.length > 0) {
+      dates.forEach((d) => (slotsMap[d] = []));
+    } else {
+      const today = new Date().toISOString().split("T")[0];
+      dates = [today];
+      slotsMap[today] = [];
+    }
+  }
+
+  out.dates = sortServiceDates(dates);
+  out.slots = slotsMap;
+  out.imageAlt = doc.imageAlt ?? doc.alt ?? out.name;
+  out.raw = doc;
+  return out;
+}
+
 export default function ServiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { isSignedIn, userId, getToken } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
 
   // UI state
   const [selectedDate, setSelectedDate] = useState("");
@@ -129,39 +209,8 @@ export default function ServiceDetail() {
       }
 
       if (!mounted) return;
-      console.warn(
-        "All endpoints failed, falling back to local servicesData. Last error:",
-        lastError,
-      );
-      const local =
-        servicesData && servicesData.find((s) => String(s.id) === String(id));
-      if (local) {
-        const cloned = JSON.parse(JSON.stringify(local));
-        if (
-          !cloned.slots ||
-          (Array.isArray(cloned.slots) &&
-            cloned.dates &&
-            cloned.dates.length > 0)
-        ) {
-          const arrSlots = Array.isArray(cloned.slots) ? cloned.slots : [];
-          const slotsMap = {};
-          if (cloned.dates && cloned.dates.length > 0) {
-            cloned.dates.forEach((d) => (slotsMap[d] = arrSlots.slice()));
-          } else {
-            const today = new Date().toISOString().split("T")[0];
-            slotsMap[today] = arrSlots.slice();
-            cloned.dates = [today];
-          }
-          cloned.slots = slotsMap;
-        }
-        setService(cloned);
-        if (cloned.dates && cloned.dates.length > 0)
-          setSelectedDate(cloned.dates[0]);
-        setLoading(false);
-        return;
-      }
-
-      setFetchError("Unable to fetch service details from server.");
+      console.warn("Unable to fetch service details from server. Last error:", lastError);
+      setFetchError("Unable to fetch service details from server. Please try again later.");
       setLoading(false);
     }
 
@@ -172,93 +221,6 @@ export default function ServiceDetail() {
       controller.abort();
     };
   }, [id]);
-
-  // place these helpers near the top of the file (above transformServiceShape)
-
-  function normalizeToDateString(d) {
-    // Convert anything date-like into YYYY-MM-DD string, or return null if invalid
-    const dt = new Date(d);
-    if (isNaN(dt)) return null;
-    return dt.toISOString().split("T")[0];
-  }
-
-  function sortServiceDates(datesArr) {
-    // Accepts array of mixed date strings / Date objects, returns array of unique YYYY-MM-DD strings
-    if (!Array.isArray(datesArr)) return [];
-
-    const uniq = Array.from(
-      new Set(datesArr.map(normalizeToDateString).filter(Boolean)),
-    );
-
-    const parsed = uniq.map((ds) => ({ ds, date: new Date(ds) }));
-
-    const dateVal = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-
-    const today = new Date();
-    const todayVal = dateVal(today);
-
-    const past = parsed
-      .filter((p) => dateVal(p.date) < todayVal)
-      .sort((a, b) => dateVal(b.date) - dateVal(a.date)); // nearest past first
-
-    const future = parsed
-      .filter((p) => dateVal(p.date) >= todayVal)
-      .sort((a, b) => dateVal(a.date) - dateVal(b.date)); // earliest future first (includes today)
-
-    return [...past, ...future].map((p) => p.ds);
-  }
-
-  // Replace your transformServiceShape with this updated version:
-  function transformServiceShape(doc) {
-    const out = {};
-    out.id =
-      doc._id ??
-      doc.id ??
-      doc.slug ??
-      String(doc.name).replace(/\s+/g, "-").toLowerCase();
-    out.name = doc.name ?? doc.title ?? "Service";
-    out.image =
-      doc.image || doc.imageUrl || doc.imageURL || doc.image_path || null;
-    out.price =
-      typeof doc.price === "number" ? doc.price : Number(doc.price) || 0;
-    out.about = doc.about ?? doc.description ?? doc.shortDescription ?? "";
-    out.instructions = Array.isArray(doc.instructions) ? doc.instructions : [];
-
-    let dates = Array.isArray(doc.dates) ? doc.dates.slice() : [];
-    let slotsMap = {};
-    if (
-      doc.slots &&
-      !Array.isArray(doc.slots) &&
-      typeof doc.slots === "object"
-    ) {
-      slotsMap = { ...doc.slots };
-      if (dates.length === 0) dates = Object.keys(slotsMap);
-    } else if (Array.isArray(doc.slots)) {
-      const arr = doc.slots.slice();
-      if (dates.length > 0) {
-        dates.forEach((d) => (slotsMap[d] = arr.slice()));
-      } else {
-        const today = new Date().toISOString().split("T")[0];
-        slotsMap[today] = arr.slice();
-        dates = [today];
-      }
-    } else {
-      if (dates.length > 0) {
-        dates.forEach((d) => (slotsMap[d] = []));
-      } else {
-        const today = new Date().toISOString().split("T")[0];
-        dates = [today];
-        slotsMap[today] = [];
-      }
-    }
-
-    // Ensure dates normalized and ordered: past-first (nearest → older), then today+future (earliest → latest)
-    out.dates = sortServiceDates(dates);
-    out.slots = slotsMap;
-    out.imageAlt = doc.imageAlt ?? doc.alt ?? out.name;
-    out.raw = doc;
-    return out;
-  }
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -372,7 +334,7 @@ export default function ServiceDetail() {
         return;
       }
 
-      const { appointment, checkoutUrl } = json || {};
+      const { checkoutUrl } = json || {};
 
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
@@ -424,7 +386,7 @@ export default function ServiceDetail() {
             Service not found
           </h2>
           <p className={serviceDetailStyles.loadingText}>
-            Please go back and select a valid service.
+            {fetchError || "Please go back and select a valid service."}
           </p>
           <Link to="/services" className={serviceDetailStyles.backToServices}>
             Back to Services

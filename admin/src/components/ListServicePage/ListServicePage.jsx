@@ -192,7 +192,7 @@ function sortSlotsForDisplay(slots = []) {
 
       // 2) ISO datetime like "2026-01-06T10:00:00.000Z" or "2026-01-06T10:00:00"
       const isoMatch = raw.match(
-        /^(\d{4}-\d{2}-\d{2})(?:[T\s](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?)?/
+        /^(\d{4}-\d{2}-\d{2})(?:[T\s](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?/
       );
       if (isoMatch) {
         const datePart = isoMatch[1]; // YYYY-MM-DD (use as-is to avoid TZ shifts)
@@ -289,7 +289,7 @@ function sortSlotsForDisplay(slots = []) {
 
     // If timeStr is an ISO full datetime, extract time portion
     const isoMatch = raw.match(
-      /[T\s](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?$/
+      /[T\s](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/
     );
     if (isoMatch) {
       const hh24 = Number(isoMatch[1]);
@@ -355,7 +355,9 @@ function sortSlotsForDisplay(slots = []) {
       ).join("\n"),
       price: latest.price ?? latest.fee ?? 0,
       available:
-        latest.available ?? latest.availability === "Available" ?? true,
+        typeof latest.available === "boolean"
+          ? latest.available
+          : (latest.availability ? latest.availability === "Available" : true),
       // show remote image URL as preview if present
       imagePreview: latest.imageUrl || latest.image || latest.imageSrc || "",
       imageFile: null, // file chosen by user when changing
@@ -645,8 +647,6 @@ function sortSlotsForDisplay(slots = []) {
 
   function updateSlot(slotId, field, value) {
     setEditForm((p) => {
-      // find existing slot to compare
-      const oldSlot = (p.slots || []).find((s) => s.id === slotId) || {};
       // restrict changes that would set a date before today
       if (field === "date" && value) {
         // block selecting a past date

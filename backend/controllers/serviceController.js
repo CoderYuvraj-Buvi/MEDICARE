@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Service from "../models/Service.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
@@ -118,6 +119,9 @@ export async function getServices(req, res) {
 export async function getServiceById(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service ID" });
+    }
     const service = await Service.findById(id).lean();
     if (!service) return res.status(404).json({ success: false, message: "Service not found" });
     return res.status(200).json({ success: true, data: service });
@@ -133,6 +137,9 @@ export async function getServiceById(req, res) {
 export async function updateService(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service ID" });
+    }
     const existing = await Service.findById(id);
     if (!existing) return res.status(404).json({ success: false, message: "Service not found" });
 
@@ -180,6 +187,9 @@ export async function updateService(req, res) {
 export async function deleteService(req, res) {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service ID" });
+    }
     const existing = await Service.findById(id);
     if (!existing) return res.status(404).json({ success: false, message: "Service not found" });
 

@@ -77,7 +77,7 @@ export default function Navbar() {
           <button
             className={navbarStylesDr.logoutButtonDesktop}
             onClick={() => {
-              // TODO: integrate real logout (clear auth + redirect)
+              localStorage.removeItem("doctorToken_v1");
               window.location.href = "/doctor-admin/login";
             }}
           >
@@ -132,6 +132,7 @@ export default function Navbar() {
             className={navbarStylesDr.mobileLogoutButton}
             onClick={() => {
               setOpen(false);
+              localStorage.removeItem("doctorToken_v1");
               window.location.href = "/doctor-admin/login";
             }}
           >

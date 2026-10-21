@@ -298,6 +298,9 @@ export const getServiceAppointmentById = async (req, res) => {
 export const updateServiceAppointment = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service appointment ID" });
+    }
     const body = req.body || {};
     const updates = {};
 
@@ -348,6 +351,9 @@ export const updateServiceAppointment = async (req, res) => {
 export const cancelServiceAppointment = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid service appointment ID" });
+    }
     const appt = await ServiceAppointment.findById(id);
     if (!appt) return res.status(404).json({ success: false, message: "Not found" });
     if (appt.status === "Completed") return res.status(400).json({ success: false, message: "Cannot cancel a completed appointment" });

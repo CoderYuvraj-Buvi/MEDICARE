@@ -29,7 +29,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 export default function PaymentPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
 
   const appointmentId =
     searchParams.get("appointmentId") || searchParams.get("id");

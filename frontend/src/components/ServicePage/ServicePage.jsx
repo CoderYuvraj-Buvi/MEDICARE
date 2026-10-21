@@ -22,7 +22,6 @@ const ServiceCard = ({ service }) => {
       : null);
 
   const name = service.name || "Service";
-  const shortDescription = service.shortDescription || service.about || "";
 
   return (
     <div className={serviceCardStyles.card}>

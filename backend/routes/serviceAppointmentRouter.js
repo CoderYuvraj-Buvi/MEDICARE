@@ -1,6 +1,6 @@
 // routes/serviceAppointmentRouter.js
 import express from "express";
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import patientAuth from "../middlewares/patientAuth.js";
 
 import {
   getServiceAppointments,
@@ -21,13 +21,12 @@ router.get("/confirm", confirmServicePayment);
 router.post("/confirm", confirmServicePayment);
 router.get("/stats/summary", getServiceAppointmentStats);
 
-router.post("/", clerkMiddleware(), requireAuth(), createServiceAppointment);
+router.post("/", patientAuth, createServiceAppointment);
 
 // 🔥 MUST BE BEFORE :id
 router.get(
   "/me",
-  clerkMiddleware(),
-  requireAuth(),
+  patientAuth,
   getServiceAppointmentsByPatient
 );
 

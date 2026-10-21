@@ -1,6 +1,6 @@
 // routes/appointmentRouter.js
 import express from "express";
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import patientAuth from "../middlewares/patientAuth.js";
 
 import {
   getAppointments,
@@ -39,16 +39,14 @@ appointmentRouter.get("/stats/summary", getStats);
 // create appointment
 appointmentRouter.post(
   "/",
-  clerkMiddleware(),
-  requireAuth(),
+  patientAuth,
   createAppointment
 );
 
 // 🔥 IMPORTANT: /me MUST COME BEFORE /:id
 appointmentRouter.get(
   "/me",
-  clerkMiddleware(),
-  requireAuth(),
+  patientAuth,
   getAppointmentsByPatient
 );
 

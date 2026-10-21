@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import {
   CalendarDays,
   Clock,
@@ -161,11 +161,6 @@ export default function AppointmentPage() {
 
   const [doctorAppts, setDoctorAppts] = useState([]);
   const [serviceAppts, setServiceAppts] = useState([]);
-
-  const [appointmentsRaw, setAppointmentsRaw] = useState({
-    doctors: [],
-    services: [],
-  });
   const [error, setError] = useState(null);
 
   /* -------------------- Fetch Doctor Appointments -------------------- */
@@ -205,7 +200,6 @@ export default function AppointmentPage() {
       });
 
       setDoctorAppts(doctors);
-      setAppointmentsRaw((p) => ({ ...p, doctors: doctors }));
     } catch (err) {
       console.error(
         "Error calling /api/appointments/me:",
@@ -234,7 +228,6 @@ export default function AppointmentPage() {
               !a.serviceId,
           );
           setDoctorAppts(doctors);
-          setAppointmentsRaw((p) => ({ ...p, doctors }));
         } catch (err2) {
           console.error(
             "Debug fallback failed (doctors):",
@@ -285,7 +278,6 @@ export default function AppointmentPage() {
       console.log(arr);
 
       setServiceAppts(arr);
-      setAppointmentsRaw((p) => ({ ...p, services: arr }));
     } catch (err) {
       console.error(
         "Error calling /api/service-appointments/me:",
@@ -308,7 +300,6 @@ export default function AppointmentPage() {
             [];
           const arr = Array.isArray(fetched) ? fetched : [];
           setServiceAppts(arr);
-          setAppointmentsRaw((p) => ({ ...p, services: arr }));
         } catch (err2) {
           console.error(
             "Debug fallback failed (services):",
@@ -490,6 +481,11 @@ export default function AppointmentPage() {
     <div className={appointmentPageStyles.pageContainer}>
       <Toaster position="top-right" />
       <div className={appointmentPageStyles.maxWidthContainer}>
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+            {error}
+          </div>
+        )}
         {/* ------------ DOCTOR APPOINTMENTS ------------ */}
         <h1 className={appointmentPageStyles.doctorTitle}>
           Your Doctor Appointments

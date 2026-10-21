@@ -146,17 +146,19 @@ export default function ServiceDashboard({ services: servicesProp = null }) {
     }
   }
 
+  const fetchServicesRef = useRef(fetchServices);
+  fetchServicesRef.current = fetchServices;
+
   // expose a global helper so other components can call it directly if needed
   useEffect(() => {
-    window.refreshServices = () => fetchServices({ showLoading: true });
+    window.refreshServices = () => fetchServicesRef.current({ showLoading: true });
     return () => {
       try {
-        // cleanup global
-        // eslint-disable-next-line no-undef
         delete window.refreshServices;
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
