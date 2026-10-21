@@ -12,7 +12,7 @@ import {
 import { doctorsPageStyles } from "../../assets/dummyStyles";
 
 const DoctorsPage = ({ apiBase }) => {
-  const API_BASE = apiBase || "http://localhost:4000";
+  const API_BASE = apiBase || import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   const [allDoctors, setAllDoctors] = useState([]);
   const [loading, setLoading] = useState(true);

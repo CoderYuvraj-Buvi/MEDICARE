@@ -13,7 +13,7 @@ import { dashboardStyles as s } from "../../assets/dummyStyles";
 /* ----------------------
   Config
 ------------------------ */
-const API_BASE = "http://localhost:4000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 // Endpoint that returns JSON { count: <number> }
 const PATIENT_COUNT_API = `${API_BASE}/api/appointments/paitents/count`;
 

@@ -15,7 +15,7 @@ import { addServiceStyles } from "../../assets/dummyStyles";
 
 
 export default function AddService({ apiBase, serviceId }) {
-  const API_BASE = apiBase || "http://localhost:4000";
+  const API_BASE = apiBase || import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   const fileRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null); // either objectURL or remote imageUrl

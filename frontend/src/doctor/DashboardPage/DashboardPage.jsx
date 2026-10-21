@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { dashboardStyles } from "../../assets/dummyStyles";
 
-const API_BASE = "http://localhost:4000"; // override by passing apiBase prop
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000"; // override by passing apiBase prop
 
 /* -------------------------
    Helpers: date/time + status mapping
