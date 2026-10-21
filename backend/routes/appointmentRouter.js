@@ -57,7 +57,8 @@ appointmentRouter.get(
   getAppointmentsByDoctor
 );
 
-appointmentRouter.get("/paitents/count", getRegisteredUserCount); 
+appointmentRouter.get("/patients/count", getRegisteredUserCount);
+appointmentRouter.get("/paitents/count", getRegisteredUserCount); // legacy alias
 
 // Appointment ID routes
 appointmentRouter.get("/:id", getAppointmentById);

@@ -13,10 +13,16 @@ const VerifyPaymentPage = () => {
 
     const verifyPayment = async () => {
       const params = new URLSearchParams(location.search || "");
-      const sessionId = params.get("session_id") || params.get("appointmentId") || params.get("id");
+      const sessionId =
+        params.get("session_id") ||
+        params.get("appointmentId") ||
+        params.get("id");
 
       // Payment cancelled
-      if (location.pathname === "/appointment/cancel" || params.get("status") === "cancel") {
+      if (
+        location.pathname === "/appointment/cancel" ||
+        params.get("status") === "cancel"
+      ) {
         if (!cancelled)
           navigate("/appointments?payment_status=Cancelled", { replace: true });
         return;
@@ -55,7 +61,15 @@ const VerifyPaymentPage = () => {
     };
   }, [location, navigate]);
 
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-emerald-50/50">
+      <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-sm">
+        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <h2 className="text-lg font-bold text-slate-800">Verifying Payment...</h2>
+        <p className="text-xs text-slate-500 mt-1">Please wait while we confirm your appointment.</p>
+      </div>
+    </div>
+  );
 };
 
 export default VerifyPaymentPage;

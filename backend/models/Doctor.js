@@ -10,7 +10,7 @@ const doctorSchema = new mongoose.Schema(
       index: true,
     },
 
-    // ⚠️ Plain text password (NOT hashed)
+    // Securely hashed password (bcrypt)
     password: {
       type: String,
       required: true,

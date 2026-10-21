@@ -33,10 +33,16 @@ function parseTimeString(timeStr) {
 }
 
 const buildFrontendBase = (req) => {
+  const origin = req.get("origin") || req.get("referer");
+  if (origin) {
+    try {
+      const u = new URL(origin);
+      return `${u.protocol}//${u.host}`;
+    } catch (e) {}
+  }
   const env = process.env.FRONTEND_URL;
-  if (env) return env.replace(/\/$/, "");
-  const origin = req.get("origin") || req.get("referer") || null;
-  return origin ? origin.replace(/\/$/, "") : null;
+  if (env) return env.split(",")[0].trim().replace(/\/$/, "");
+  return "http://localhost:5173";
 };
 
 function resolveClerkUserId(req) {

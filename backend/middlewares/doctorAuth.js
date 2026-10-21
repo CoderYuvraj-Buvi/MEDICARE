@@ -3,9 +3,14 @@ import jwt from "jsonwebtoken";
 import Doctor from "../models/Doctor.js";
 
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
+const JWT_SECRET = process.env.JWT_SECRET || "medicare_default_dev_jwt_secret";
 
 export default async function doctorAuth(req, res, next) {
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+    console.error("❌ JWT_SECRET is missing in production environment!");
+    return res.status(500).json({ success: false, message: "Authentication configuration error" });
+  }
+
   const authHeader = req.headers.authorization;
 
   // 1. Check token

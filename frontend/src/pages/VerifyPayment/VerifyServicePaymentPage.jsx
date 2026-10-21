@@ -13,9 +13,15 @@ const VerifyServicePaymentPage = () => {
 
     const verifyServicePayment = async () => {
       const params = new URLSearchParams(location.search || "");
-      const sessionId = params.get("session_id") || params.get("appointmentId") || params.get("id");
+      const sessionId =
+        params.get("session_id") ||
+        params.get("appointmentId") ||
+        params.get("id");
 
-      if (location.pathname === "/service-appointment/cancel" || params.get("status") === "cancel") {
+      if (
+        location.pathname === "/service-appointment/cancel" ||
+        params.get("status") === "cancel"
+      ) {
         if (!cancelled) {
           navigate("/appointments?service_payment=Cancelled", {
             replace: true,
@@ -45,7 +51,7 @@ const VerifyServicePaymentPage = () => {
         if (cancelled) return;
 
         if (res?.data?.success) {
-          // ✅ Service payment confirmed
+          // Service payment confirmed
           navigate("/appointments?service_payment=Paid", {
             replace: true,
           });
@@ -71,7 +77,15 @@ const VerifyServicePaymentPage = () => {
     };
   }, [location, navigate]);
 
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-emerald-50/50">
+      <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-sm">
+        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <h2 className="text-lg font-bold text-slate-800">Verifying Service Booking...</h2>
+        <p className="text-xs text-slate-500 mt-1">Please wait while we confirm your service appointment.</p>
+      </div>
+    </div>
+  );
 };
 
 export default VerifyServicePaymentPage;

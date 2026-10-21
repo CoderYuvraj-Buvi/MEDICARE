@@ -15,7 +15,7 @@ import { dashboardStyles as s } from "../../assets/dummyStyles";
 ------------------------ */
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 // Endpoint that returns JSON { count: <number> }
-const PATIENT_COUNT_API = `${API_BASE}/api/appointments/paitents/count`;
+const PATIENT_COUNT_API = `${API_BASE}/api/appointments/patients/count`;
 
 /* ----------------------
   Helpers

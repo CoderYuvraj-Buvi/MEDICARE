@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 
 // Pages
 import Home from "./pages/Home/Home";
@@ -20,8 +20,8 @@ import EditProfile from "./pages/EditProfile/EditProfile";
 // Lucide icon
 import { CircleChevronUp } from "lucide-react";
 import PaymentPage from "./pages/Payment/PaymentPage";
-import VerifyPaymentPage from "../VerifyPaymetPage";
-import VerifyServicePaymentPage from "../VerifyServicePaymentPage";
+import VerifyPaymentPage from "./pages/VerifyPayment/VerifyPaymentPage";
+import VerifyServicePaymentPage from "./pages/VerifyPayment/VerifyServicePaymentPage";
 
 /* ================= Scroll To Top ================= */
 const ScrollToTop = () => {
@@ -61,6 +61,15 @@ const ScrollButton = () => {
       <CircleChevronUp size={22} />
     </button>
   );
+};
+
+/* ================= Doctor Auth Guard ================= */
+const RequireDoctorAuth = ({ children }) => {
+  const token = localStorage.getItem("doctorToken_v1");
+  if (!token) {
+    return <Navigate to="/doctor-admin/login" replace />;
+  }
+  return children;
 };
 
 /* ================= Main App ================= */
@@ -105,12 +114,30 @@ const App = () => {
             element={<VerifyServicePaymentPage />}
           />
 
-          {/* Doctor Admin */}
-          <Route path="/doctor-admin/:id" element={<DHome />} />
-          <Route path="/doctor-admin/:id/appointments" element={<List />} />
+          {/* Doctor Admin (Protected) */}
+          <Route
+            path="/doctor-admin/:id"
+            element={
+              <RequireDoctorAuth>
+                <DHome />
+              </RequireDoctorAuth>
+            }
+          />
+          <Route
+            path="/doctor-admin/:id/appointments"
+            element={
+              <RequireDoctorAuth>
+                <List />
+              </RequireDoctorAuth>
+            }
+          />
           <Route
             path="/doctor-admin/:id/profile/edit"
-            element={<EditProfile />}
+            element={
+              <RequireDoctorAuth>
+                <EditProfile />
+              </RequireDoctorAuth>
+            }
           />
         </Routes>
       </div>

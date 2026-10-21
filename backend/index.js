@@ -14,26 +14,38 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // ⭐ IMPORTANT: ENABLE CREDENTIALS FOR CLERK COOKIE SESSION
-const allowedOrigins = [
-  "http://localhost:5173", // user frontend
-  "http://localhost:5174", // admin dashboard
-  process.env.FRONTEND_URL,
-  process.env.ADMIN_URL,
-].filter(Boolean);
+// ⭐ Parse and normalize allowed origins
+const parseOrigins = () => {
+  const defaults = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"];
+  const custom = [process.env.FRONTEND_URL, process.env.ADMIN_URL]
+    .filter(Boolean)
+    .flatMap((url) => url.split(","))
+    .map((url) => url.trim().replace(/\/$/, ""));
+  return Array.from(new Set([...defaults, ...custom]));
+};
+
+const allowedOrigins = parseOrigins();
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow server-to-server & tools like Postman (no origin)
+      // allow server-to-server, curl, Postman (no origin)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      const normalizedOrigin = origin.replace(/\/$/, "");
+
+      if (
+        allowedOrigins.includes(normalizedOrigin) ||
+        // Allow vercel preview domains if needed
+        (process.env.NODE_ENV !== "production" && normalizedOrigin.endsWith(".vercel.app"))
+      ) {
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      // Reject politely without throwing an unhandled Express error
+      return callback(null, false);
     },
-    credentials: true, // ✅ REQUIRED for cookies / Clerk
+    credentials: true, // REQUIRED for cookies / Clerk
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -57,9 +69,13 @@ app.use("/api/doctors", doctorRouter);
 app.use("/api/services", serviceRouter);
 app.use("/api/service-appointments", serviceAppointmentRouter);
 
-// Test route
+// Health check and root route
 app.get('/', (req, res) => {
-    res.send('API Working ');
+    res.json({ success: true, message: 'Medicare API Working' });
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 app.listen(port, () => {

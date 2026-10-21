@@ -144,7 +144,6 @@ const serviceAppointmentSchema = new mongoose.Schema(
       sessionId: {
         type: String, // Payment session identifier
         default: "",
-        index: true,
       },
 
       meta: {

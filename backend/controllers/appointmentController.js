@@ -16,12 +16,16 @@ const safeNumber = (v) => {
 };
 
 const buildFrontendBase = (req) => {
-  if (FRONTEND_URL) return FRONTEND_URL.replace(/\/$/, "");
   const origin = req.get("origin") || req.get("referer");
-  if (origin) return origin.replace(/\/$/, "");
-  const host = req.get("host");
-  if (host) return `${req.protocol || "http"}://${host}`.replace(/\/$/, "");
-  return null;
+  if (origin) {
+    try {
+      const u = new URL(origin);
+      return `${u.protocol}//${u.host}`;
+    } catch (e) {}
+  }
+  const env = process.env.FRONTEND_URL;
+  if (env) return env.split(",")[0].trim().replace(/\/$/, "");
+  return "http://localhost:5173";
 };
 
 function resolveClerkUserId(req) {

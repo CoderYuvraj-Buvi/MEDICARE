@@ -1,4 +1,5 @@
 // controllers/doctorController.js
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Doctor from "../models/Doctor.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
@@ -81,10 +82,11 @@ export async function createDoctor(req, res) {
     }
 
     const schedule = parseScheduleInput(body.schedule);
+    const hashedPassword = await bcrypt.hash(String(body.password), 10);
 
     const doc = new Doctor({
       email: emailLC,
-      password: body.password,
+      password: hashedPassword,
       name: body.name,
       specialization: body.specialization || "",
       imageUrl,
@@ -323,8 +325,24 @@ export async function doctorLogin(req, res) {
     const doc = await Doctor.findOne({ email: email.toLowerCase() }).select("+password");
     if (!doc) return res.status(401).json({ success: false, message: "Invalid credentials" });
 
-    // Direct comparison (NO bcrypt)
-    if (doc.password !== password) return res.status(401).json({ success: false, message: "Invalid credentials" });
+    // Secure comparison (supports bcrypt and auto-upgrades legacy plaintext)
+    let isMatch = false;
+    if (doc.password.startsWith("$2a$") || doc.password.startsWith("$2b$")) {
+      isMatch = await bcrypt.compare(String(password), doc.password);
+    } else {
+      isMatch = doc.password === password;
+      if (isMatch) {
+        // Transparently upgrade legacy plaintext password to secure hash
+        try {
+          doc.password = await bcrypt.hash(String(password), 10);
+          await doc.save();
+        } catch (upgradeErr) {
+          console.warn("Could not upgrade doctor password to bcrypt hash:", upgradeErr);
+        }
+      }
+    }
+
+    if (!isMatch) return res.status(401).json({ success: false, message: "Invalid credentials" });
 
     const secret = process.env.JWT_SECRET;
     if (!secret) return res.status(500).json({ success: false, message: "JWT_SECRET not configured" });

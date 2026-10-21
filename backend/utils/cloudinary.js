@@ -21,13 +21,19 @@ export async function uploadToCloudinary(filePath, folder = "Doctor") {
       resource_type: "image",
     });
 
-    // remove local file after upload
-    fs.unlinkSync(filePath);
-
-    return result;  // contains { secure_url, public_id, ... }
+    return result; // contains { secure_url, public_id, ... }
   } catch (err) {
     console.error("Cloudinary upload error:", err);
     throw err;
+  } finally {
+    // Always remove local temp file after upload attempt
+    try {
+      if (filePath && fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (cleanupErr) {
+      console.warn("Could not delete temporary uploaded file:", cleanupErr);
+    }
   }
 }
 
